@@ -39,6 +39,19 @@ class ComposeController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = nil
+        addChildCompose()
+    }
+
+    override func viewWillTransition(to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator) {
+        super.viewWillTransition(to: size, with: coordinator)
+
+        DispatchQueue.main.asyncAfter(deadline: .now()) {
+           self.removeChildCompose()
+           self.addChildCompose()
+        }
+    }
+
+    private func addChildCompose() {
         if let viewController = childController {
             addChild(viewController)
             view.addSubview(viewController.view)
@@ -49,14 +62,25 @@ class ComposeController: UIViewController {
         }
     }
 
+    private func removeChildCompose() {
+        childController?.willMove(toParent: nil)
+        view.subviews.forEach({$0.removeFromSuperview()})
+        children.forEach({$0.removeFromParent()})
+        childController?.dismiss(animated: false)
+    }
+
+    private func refreshChild() {
+        childController?.view.frame = view.bounds
+        view.layer.setNeedsLayout()
+        children.forEach({$0.view.layer.setNeedsLayout()})
+        childController?.view.layer.setNeedsLayout()
+    }
+
     open override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
 
         if isAboutToClose {
-            childController?.willMove(toParent: nil)
-            view.subviews.forEach({$0.removeFromSuperview()})
-            children.forEach({$0.removeFromParent()})
-            childController?.dismiss(animated: false)
+            removeChildCompose()
             childController = nil
         }
     }
